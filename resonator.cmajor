@@ -1,0 +1,136 @@
+processor Resonator  [[ main ]]
+{
+    input stream float<2> in;
+    output stream float<2> out;
+
+    input value float dry [[ min: 0, max: 1.0, init: 1.0, step: 0.01, name: "dry" ]];
+    input value float wet [[ min: 0, max: 1.0, init: 1.0, step: 0.01, name: "wet" ]];
+    input value float dampen [[ min: 0, max: 1.0, init: 1.0, step: 0.01, name: "dampen" ]];
+    input value float amountglobal [[ min: 0, max: 1.0, init: 0, step: 0.01, name: "amount" ]];
+    input value float amount1 [[ min: 0, max: 1.0, init: 0, step: 0.01, name: "C4" ]];
+    input value float amount2 [[ min: 0, max: 1.0, init: 0, step: 0.01, name: "C#4" ]];
+    input value float amount3 [[ min: 0, max: 1.0, init: 0, step: 0.01, name: "D4" ]];
+    input value float amount4 [[ min: 0, max: 1.0, init: 0, step: 0.01, name: "D#4" ]];
+    input value float amount5 [[ min: 0, max: 1.0, init: 0, step: 0.01, name: "E4" ]];
+    input value float amount6 [[ min: 0, max: 1.0, init: 0, step: 0.01, name: "F4" ]];
+    input value float amount7 [[ min: 0, max: 1.0, init: 0, step: 0.01, name: "F#4" ]];
+    input value float amount8 [[ min: 0, max: 1.0, init: 0, step: 0.01, name: "G4" ]];
+    input value float amount9 [[ min: 0, max: 1.0, init: 0, step: 0.01, name: "G#4" ]];
+    input value float amount10 [[ min: 0, max: 1.0, init: 0, step: 0.01, name: "A4" ]];
+    input value float amount11 [[ min: 0, max: 1.0, init: 0, step: 0.01, name: "A#4" ]];
+    input value float amount12 [[ min: 0, max: 1.0, init: 0, step: 0.01, name: "B4" ]];
+
+    const int BUFFERSIZE = 100000;
+    float[BUFFERSIZE] bufferL;
+    float[BUFFERSIZE] bufferR;
+    wrap<BUFFERSIZE> index;
+
+
+    
+
+    const int GATEBUFFERSIZE = 2048;
+    float[GATEBUFFERSIZE] gatebufferL;
+    float[GATEBUFFERSIZE] gatebufferR;
+    wrap<GATEBUFFERSIZE> gateindex;
+
+    float sumL = 0.0f;
+    float sumR = 0.0f;
+
+
+
+    struct Delay
+    {
+        float[2048] buffer;
+        wrap<2048> index;
+
+        float process(float x, int time, float amount, float dampen)
+        {
+            this.buffer[this.index] = pow(amount, 0.1f) * x + amount * ((0.98f - 0.49f * dampen) * this.buffer.at((this.index-time)%2048) + 0.49f * dampen * this.buffer.at((this.index-time-1)%2048));
+            this.index++;
+            return this.buffer.at(this.index-time-1);
+        }
+    }
+
+    void main()
+    {
+
+        Delay delay1L;
+        Delay delay2L;
+        Delay delay3L;
+        Delay delay4L;
+        Delay delay5L;
+        Delay delay6L;
+        Delay delay7L;
+        Delay delay8L;
+        Delay delay9L;
+        Delay delay10L;
+        Delay delay11L;
+        Delay delay12L;
+
+
+        Delay delay1R;
+        Delay delay2R;
+        Delay delay3R;
+        Delay delay4R;
+        Delay delay5R;
+        Delay delay6R;
+        Delay delay7R;
+        Delay delay8R;
+        Delay delay9R;
+        Delay delay10R;
+        Delay delay11R;
+        Delay delay12R;
+
+
+        loop
+        {           
+            float absInL = abs(in[0]);
+            float absInR = abs(in[1]);
+            
+            float sampleRate = processor.frequency;
+            
+            float xL = in[0];
+            float yL = 0.0f;
+            yL += delay1L.process(xL, int(sampleRate/(440.0f*pow(1.05946309436f, -9.0f))), amount1 * amountglobal, dampen);
+            yL += delay2L.process(xL, int(sampleRate/(440.0f*pow(1.05946309436f, -8.0f))), amount2 * amountglobal, dampen);
+            yL += delay3L.process(xL, int(sampleRate/(440.0f*pow(1.05946309436f, -7.0f))), amount3 * amountglobal, dampen);
+            yL += delay4L.process(xL, int(sampleRate/(440.0f*pow(1.05946309436f, -6.0f))), amount4 * amountglobal, dampen);
+            yL += delay5L.process(xL, int(sampleRate/(440.0f*pow(1.05946309436f, -5.0f))), amount5 * amountglobal, dampen);
+            yL += delay6L.process(xL, int(sampleRate/(440.0f*pow(1.05946309436f, -4.0f))), amount6 * amountglobal, dampen);
+            yL += delay7L.process(xL, int(sampleRate/(440.0f*pow(1.05946309436f, -3.0f))), amount7 * amountglobal, dampen);
+            yL += delay8L.process(xL, int(sampleRate/(440.0f*pow(1.05946309436f, -2.0f))), amount8 * amountglobal, dampen);
+            yL += delay9L.process(xL, int(sampleRate/(440.0f*pow(1.05946309436f, -1.0f))), amount9 * amountglobal, dampen);
+            yL += delay10L.process(xL, int(sampleRate/(440.0f*pow(1.05946309436f, 0.0f))), amount10 * amountglobal, dampen);
+            yL += delay11L.process(xL, int(sampleRate/(440.0f*pow(1.05946309436f, 1.0f))), amount11 * amountglobal, dampen);
+            yL += delay12L.process(xL, int(sampleRate/(440.0f*pow(1.05946309436f, 2.0f))), amount12 * amountglobal, dampen);
+
+            yL *= 0.25f;
+
+
+            float xR = in[1];
+            float yR = 0.0f;
+            yR += delay1R.process(xR, int(sampleRate/(440.0f*pow(1.05946309436f, -9.0f))), amount1 * amountglobal, dampen);
+            yR += delay2R.process(xR, int(sampleRate/(440.0f*pow(1.05946309436f, -8.0f))), amount2 * amountglobal, dampen);
+            yR += delay3R.process(xR, int(sampleRate/(440.0f*pow(1.05946309436f, -7.0f))), amount3 * amountglobal, dampen);
+            yR += delay4R.process(xR, int(sampleRate/(440.0f*pow(1.05946309436f, -6.0f))), amount4 * amountglobal, dampen);
+            yR += delay5R.process(xR, int(sampleRate/(440.0f*pow(1.05946309436f, -5.0f))), amount5 * amountglobal, dampen);
+            yR += delay6R.process(xR, int(sampleRate/(440.0f*pow(1.05946309436f, -4.0f))), amount6 * amountglobal, dampen);
+            yR += delay7R.process(xR, int(sampleRate/(440.0f*pow(1.05946309436f, -3.0f))), amount7 * amountglobal, dampen);
+            yR += delay8R.process(xR, int(sampleRate/(440.0f*pow(1.05946309436f, -2.0f))), amount8 * amountglobal, dampen);
+            yR += delay9R.process(xR, int(sampleRate/(440.0f*pow(1.05946309436f, -1.0f))), amount9 * amountglobal, dampen);
+            yR += delay10R.process(xR, int(sampleRate/(440.0f*pow(1.05946309436f, 0.0f))), amount10 * amountglobal, dampen);
+            yR += delay11R.process(xR, int(sampleRate/(440.0f*pow(1.05946309436f, 1.0f))), amount11 * amountglobal, dampen);
+            yR += delay12R.process(xR, int(sampleRate/(440.0f*pow(1.05946309436f, 2.0f))), amount12 * amountglobal, dampen);
+
+            yR *= 0.25f;
+
+            
+
+            out <- (yL * wet + xL * dry, yR * wet + xR * dry);
+            
+            index++;
+            
+            advance();
+        }
+    }
+}
