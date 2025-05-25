@@ -7,7 +7,7 @@
     "description":      "resonator",
     "category":         "generator",
     "manufacturer":     "Your Company Goes Here",
-    "isInstrument":     true,
+    "isInstrument":     false,
 
     "source":           "resonator.cmajor"
 }

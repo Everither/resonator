@@ -18,6 +18,9 @@ processor Resonator  [[ main ]] {
     input value float amount10 [[ min: 0, max: 1.0, init: 0, step: 0.01, name: "A4" ]];
     input value float amount11 [[ min: 0, max: 1.0, init: 0, step: 0.01, name: "A#4" ]];
     input value float amount12 [[ min: 0, max: 1.0, init: 0, step: 0.01, name: "B4" ]];
+    input value float threshold [[ min: 0, max: 1.0, init: 0, step: 0.01, name: "threshold" ]];
+    input value float attack [[ min: 0, max: 1.0, init: 0, step: 0.01, name: "attack" ]];
+    input value float release [[ min: 0, max: 1.0, init: 0, step: 0.01, name: "release" ]];
 
     
 
@@ -50,7 +53,34 @@ processor Resonator  [[ main ]] {
         }
     }
 
+    struct Envelope {
+        float y;
+
+        float process(float x, float attack, float release) {
+            float riseRate = exp(-10 * attack);
+            float fallRate = exp(-10 * release);
+            if (abs(x) > this.y) {
+                this.y += (abs(x) - this.y) * riseRate;
+            } else {
+                this.y += (abs(x) - this.y) * fallRate;
+            }
+            return this.y;
+        }
+    }
+
+    struct Gate {
+        float process(float x, float threshold) {
+            if (abs(x) > threshold) {
+                return 1.0f;
+            } else {
+                return 0.0f;
+            }
+        }
+    }
+
+
     void main() {
+
         Delay[12] delayLs;
         for (int i = 0; i < 12; i++) {
             delayLs.at(i) = Delay();
@@ -61,29 +91,40 @@ processor Resonator  [[ main ]] {
             delayRs.at(i) = Delay();
         }
 
+        Gate gateL;
+        Gate gateR;
+        
+        Envelope envelopeL;
+        Envelope envelopeR;
 
         loop {
             float[12] amounts = (amount1, amount2, amount3, amount4, amount5, amount6, amount7, amount8, amount9, amount10, amount11, amount12);
             
-            float sampleRate = processor.frequency;
-            
+            float sampleRate = float(processor.frequency);
+
             float xL = in[0];
+            float xR = in[1];
+
+            float envL = envelopeL.process(gateL.process(xL, threshold), attack, release);
+            float envR = envelopeR.process(gateR.process(xR, threshold), attack, release);
+            
+            
             float yL = 0.0f;
             for (int i = 0; i < 12; i++) {
-                int time = int(sampleRate/(440.0f*pow(1.05946309436f, -9.0f + float(i))));
-                float amount = amounts.at(i) * amountglobal;
-                yL += delayLs.at(i).process(xL, time, amount, dampen);
+                int wavelength = int(sampleRate/(440.0f*pow(1.05946309436f, -9.0f + float(i))));
+                float amount = amounts.at(i) * amountglobal * envL;
+                yL += delayLs.at(i).process(xL, wavelength, amount, dampen);
             }
 
             yL *= 0.25f;
 
 
-            float xR = in[1];
+            
             float yR = 0.0f;
             for (int i = 0; i < 12; i++) {
-                int time = int(sampleRate/(440.0f*pow(1.05946309436f, -9.0f + float(i))));
-                float amount = amounts.at(i) * amountglobal;
-                yR += delayRs.at(i).process(xR, time, amount, dampen);
+                int wavelength = int(sampleRate/(440.0f*pow(1.05946309436f, -9.0f + float(i))));
+                float amount = amounts.at(i) * amountglobal * envR;
+                yR += delayRs.at(i).process(xR, wavelength, amount, dampen);
             }
 
             yR *= 0.25f;
