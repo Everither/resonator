@@ -24,24 +24,6 @@ processor Resonator  [[ main ]] {
 
     
 
-    const int BUFFERSIZE = 100000;
-    float[BUFFERSIZE] bufferL;
-    float[BUFFERSIZE] bufferR;
-    wrap<BUFFERSIZE> index;
-
-
-    
-
-    const int GATEBUFFERSIZE = 2048;
-    float[GATEBUFFERSIZE] gatebufferL;
-    float[GATEBUFFERSIZE] gatebufferR;
-    wrap<GATEBUFFERSIZE> gateindex;
-
-    float sumL = 0.0f;
-    float sumR = 0.0f;
-
-
-
     struct Delay {
         float[2048] buffer;
         wrap<2048> index;
@@ -53,7 +35,7 @@ processor Resonator  [[ main ]] {
         }
     }
 
-    struct Envelope {
+    struct AmpFollower {
         float y;
 
         float process(float x, float attack, float release) {
@@ -68,9 +50,11 @@ processor Resonator  [[ main ]] {
         }
     }
 
-    struct Gate {
+    struct AbsHeaviside {
+        // Takes the abs of the signal, then outputs 0 if less than threshold or 1 otherwise
         float process(float x, float threshold) {
-            if (abs(x) > threshold) {
+            float bias = 0.001f;
+            if (abs(x) + bias > threshold) {
                 return 1.0f;
             } else {
                 return 0.0f;
@@ -91,11 +75,11 @@ processor Resonator  [[ main ]] {
             delayRs.at(i) = Delay();
         }
 
-        Gate gateL;
-        Gate gateR;
+        AbsHeaviside absHeavisideL;
+        AbsHeaviside absHeavisideR;
         
-        Envelope envelopeL;
-        Envelope envelopeR;
+        AmpFollower ampFollowerL;
+        AmpFollower ampFollowerR;
 
         loop {
             float[12] amounts = (amount1, amount2, amount3, amount4, amount5, amount6, amount7, amount8, amount9, amount10, amount11, amount12);
@@ -105,29 +89,29 @@ processor Resonator  [[ main ]] {
             float xL = in[0];
             float xR = in[1];
 
-            float envL = envelopeL.process(gateL.process(xL, threshold), attack, release);
-            float envR = envelopeR.process(gateR.process(xR, threshold), attack, release);
+            float ampL = ampFollowerL.process(absHeavisideL.process(xL, threshold), attack, release);
+            float ampR = ampFollowerR.process(absHeavisideR.process(xR, threshold), attack, release);
             
             
             float yL = 0.0f;
             for (int i = 0; i < 12; i++) {
                 int wavelength = int(sampleRate/(440.0f*pow(1.05946309436f, -9.0f + float(i))));
-                float amount = amounts.at(i) * amountglobal * envL;
+                float amount = amounts.at(i) * amountglobal * ampL;
                 yL += delayLs.at(i).process(xL, wavelength, amount, dampen);
             }
 
-            yL *= 0.25f;
+            yL *= 0.25f;    // TODO: Magic number
 
 
             
             float yR = 0.0f;
             for (int i = 0; i < 12; i++) {
                 int wavelength = int(sampleRate/(440.0f*pow(1.05946309436f, -9.0f + float(i))));
-                float amount = amounts.at(i) * amountglobal * envR;
+                float amount = amounts.at(i) * amountglobal * ampR;
                 yR += delayRs.at(i).process(xR, wavelength, amount, dampen);
             }
 
-            yR *= 0.25f;
+            yR *= 0.25f;    // TODO: Magic number
 
             
 
