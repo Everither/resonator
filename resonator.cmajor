@@ -24,6 +24,11 @@ processor Resonator  [[ main ]] {
 
     
 
+    // Utils
+    float expScale(float x) {
+        return exp(10.0f * (x - 1));
+    }  
+    
     struct Delay {
         float[2048] buffer;
         wrap<2048> index;
@@ -38,6 +43,7 @@ processor Resonator  [[ main ]] {
     struct AmpFollower {
         float y;
 
+        // Smoothes the signal by applying some attack and release
         float process(float x, float attack, float release) {
             float riseRate = exp(-10 * attack);
             float fallRate = exp(-10 * release);
@@ -54,7 +60,7 @@ processor Resonator  [[ main ]] {
         // Takes the abs of the signal, then outputs 0 if less than threshold or 1 otherwise
         float process(float x, float threshold) {
             float bias = 0.001f;
-            if (abs(x) + bias > threshold) {
+            if (abs(x) + bias > expScale(threshold)) {
                 return 1.0f;
             } else {
                 return 0.0f;
